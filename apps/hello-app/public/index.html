@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello App</title>
+  </head>
+  <body>
+    <h1>Hello, World!</h1>
+    <p>This is the Hello app (port 8080).</p>
+    <p><a id="to-time" href="/time/">Go to Date/Time app</a></p>
+    <p><a href="api/hello">API: /api/hello</a></p>
+    <script>
+      (function () {
+        const el = document.getElementById("to-time");
+        if (!el) return;
+        const host = location.hostname;
+        const port = location.port;
+        const path = location.pathname || "/";
+        // If accessed via nginx (path contains /hello/), use proxied path
+        if (path.startsWith("/hello")) {
+          el.href = "/time/";
+          return;
+        }
+        // Direct app access at root: link to the other app's host:port
+        if (port === "8080" && path === "/") {
+          el.href = `${location.protocol}//${host}:8081/`;
+          return;
+        }
+        if (port === "8081" && path === "/") {
+          el.href = `${location.protocol}//${host}:8080/`;
+          return;
+        }
+        // Fallback to proxied path
+        el.href = "/time/";
+      })();
+    </script>
+  </body>
+</html>
