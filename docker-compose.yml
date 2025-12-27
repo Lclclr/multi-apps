@@ -26,9 +26,23 @@ services:
   nginx:
     image: nginx:stable-alpine
     ports:
-      - "8080:80" # host:8080 -> nginx:80
+      - "80:80" # host:80 -> nginx:80
+      - "443:443" # host:443 -> nginx:443
     volumes:
       - ./nginx/multi-apps.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
     depends_on:
       - hello-app
       - time-app
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    entrypoint: /bin/sh -c "certbot certonly --webroot -w /var/www/certbot -d localtower.org --non-interactive --agree-tos --email admin@localtower.org --keep-until-expiring || true"
+    depends_on:
+      - nginx
