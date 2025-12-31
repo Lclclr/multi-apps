@@ -23,16 +23,13 @@ services:
     expose:
       - "8081"
 
-  cal:
-    build: ./apps/cal
-    working_dir: /app
-    command: sh -c "npm install --production --silent && node index.js"
-    environment:
-      - PORT=8083
-    volumes:
-      - ./apps/cal:/app
+  calendar:
+    build: ../calendar
+    container_name: calendar_app
     expose:
-      - "8083"
+      - "3000"
+    environment:
+      - NODE_ENV=production
 
   contact-db:
     image: postgres:15-alpine
@@ -98,7 +95,7 @@ services:
     depends_on:
       - hello-app
       - time-app
-      - cal
+      - calendar
       - contact-client
 
   certbot:
