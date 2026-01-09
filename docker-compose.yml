@@ -3,17 +3,19 @@
 services:
   hello-app:
     build: ./apps/hello-app
+    container_name: hello_app
     working_dir: /app
     command: sh -c "npm install --production --silent && node index.js"
     environment:
-      - PORT=8080
+      - PORT=8084
     volumes:
       - ./apps/hello-app:/app
     expose:
-      - "8080"
+      - "8084"
 
   time-app:
     build: ./apps/time-app
+    container_name: time_app
     working_dir: /app
     command: sh -c "npm install --production --silent && node index.js"
     environment:
@@ -23,11 +25,36 @@ services:
     expose:
       - "8081"
 
+  vvv:
+    image: mediawiki:1.44
+    container_name: vvv_app
+    restart: unless-stopped
+    volumes:
+      - ../vvv/LocalSettings.php:/var/www/html/LocalSettings.php
+    expose:
+      - "80"
+    depends_on:
+      - vvv-database
+
+  vvv-database:
+    image: mysql:8.0.29
+    container_name: vvv_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wiki_db
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: vvv
+      MYSQL_PASSWORD: goobvvv
+    volumes:
+      - vvv_db_data:/var/lib/mysql
+    expose:
+      - "3306"
+
   calendar:
     build: ../calendar
     container_name: calendar_app
-    expose:
-      - "3000"
+    ports:
+      - "8083:3000"
     environment:
       - NODE_ENV=production
 
@@ -83,6 +110,9 @@ services:
 
   nginx:
     image: nginx:stable-alpine
+    container_name: nginx_proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "80:80" # host:80 -> nginx:80
       - "443:443" # host:443 -> nginx:443
@@ -92,11 +122,6 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/certbot/conf:/etc/letsencrypt:ro
       - ./nginx/certbot/www:/var/www/certbot:ro
-    depends_on:
-      - hello-app
-      - time-app
-      - calendar
-      - contact-client
 
   certbot:
     image: certbot/certbot
@@ -109,3 +134,5 @@ services:
 
 volumes:
   contact_pgdata:
+  vvv_db_data:
+    external: true
